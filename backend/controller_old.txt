@@ -1,0 +1,206 @@
+ PREVIOUS CONTROLLER PAGE BEFORE MONGO
+
+    var providers = require('../models/providers.models');//make provider var instead of const as in delete all we are changing value
+//of the providers
+//CRUD operations
+//HTTP verbs POST ->CREATE, GET ->READ,PUT ->UPDATE, DELETE->DELETE(CRUD OPERATIONS)
+
+//util functions
+//check if list is empty
+function isEmptyList(obj){
+    return (!obj || obj.length == 0 || Object.keys(obj).length == 0);
+}
+// to check if the id already exist
+function existsProvider(id){
+    return providers.find(provider => provider.id == id);
+}
+//to generate a unique id
+function getUniqueId(providers){
+    let min=100000;
+    let max=999999;
+    do{
+    var id = Math.floor(Math.random()*(max-min)+min);// to generate a 6 digit random number
+    }
+    while(existsProvider(id));
+    return id;
+}
+//POST
+//uri(uniform resource identifier): /api/providers
+module.exports.create= function(req,res){
+    // let min=100000;
+    // let max=999999;
+    // let id = Math.floor(Math.random()*(max-min)+min);// to generate a 6 digit random number
+    //create provider object
+    if(isEmptyList(providers)){
+        providers=[];
+    }
+    var id= req.body.id;//this is the id we get from body of the request in postman
+    if(existsProvider(id)){
+        res.status(400);
+        res.send('Duplicate id not allowed');
+        id = getUniqueId();// get new ID
+    }
+    var provider = req.body; //get new provider
+    provider.id=id;
+   
+    // let provider={
+    // create an object
+    // id: id,
+    // firstname:req.body.firstname,
+    // lastname:req.body.lastname,
+    // position:req.body.position,
+    // company:{
+    //     company_name:req.body.company.company_name,
+    //     address:req.body.company.address,
+    //     address2:req.body.company.address2,
+    //     city:req.body.company.city,
+    //     state:req.body.company.state,
+    //     postal_code:req.body.company.postal_code,
+    //     email:req.body.company.email,
+    //     phone:req.body.company.phone,
+    //     description:req.body.company.description,
+    //     tagline:req.body.company.tagline,
+    // }
+    
+//}
+
+//add new provider to list
+providers.push(provider);// update the json (here its model/provide.js)
+res.status(200);
+
+    res.send(provider);
+   
+
+}
+//GET ALL
+//uri(uniform resource identifier): /api/providers
+module.exports.readAll= function(req,res){// similar to list 
+    if(isEmptyList(providers)){
+      res.status(404);
+      res.send('List is empty');
+    }
+    res.status(200);// we need to set/issue status before sending
+    res.send(providers); //these providers is the providers on the top from models
+    //instead of rendering we need to send it to wherever its been sent from
+    // we can keep send or if json format put json
+}
+//GET ONE
+//uri(uniform resource identifier): /api/providers/123
+module.exports.readOne= function(req,res){//similar to edit 
+    if(isEmptyList(providers)){
+        res.status(404);
+        res.send('List is empty');
+      }
+    let id = req.params.id;// this is cmg from routers.get ('/details/:id)
+    let provider = providers.find(provider => provider.id == id);
+    res.status(200);
+    res.send(provider);//the above variable provider we are passing
+    
+}
+//PUT
+//uri(uniform resource identifier): /api/providers
+module.exports.update= function(req,res){
+    if(isEmptyList(providers)){
+        res.status(404);
+        res.send('List is empty so cannot update');
+      }
+    let id = req.params.id;// this is cmg from routers.get ('/details/:id) and param is for get & body is for post 
+    let provider = providers.find(provider => provider.id == id)
+    provider.firstname=req.body.firstname;
+    provider.lastname=req.body.lastname;
+    provider.position=req.body.position;
+    provider.company.company_name=req.body.company.company_name;// we are not sending this from a web form so we cant tell body it shld 
+    //be same structure as json
+    provider.company.address=req.body.company.address;
+    provider.company.address2=req.body.company.address2; 
+    provider.company.city=req.body.company.city;
+    provider.company.state=req.body.company.state;
+    provider.company.postal_code=req.body.company.postal_code;
+    provider.company.email=req.body.company.email;
+    provider.company.phone=req.body.company.phone;
+    provider.company.description=req.body.company.description;
+    provider.company.tagline=req.body.company.tagline;
+    res.status(200);
+    res.send(provider) ;
+}
+//DELETE ONE
+//uri(uniform resource identifier): /api/providers/123
+module.exports.deleteOne= function(req,res){
+    if(isEmptyList(providers)){
+        res.status(404);
+        res.send('List is empty cannot delete');
+      }
+    let id = req.params.id;
+    let provider = providers.find(provider => provider.id == id);
+    //to find index of that particular array in the model/providers.js array 
+    let idx=providers.indexOf(provider);
+
+    //remove the element at the index of "idx"
+    providers.splice(idx,1)
+    // 2nd paramater of splice tells how many elements to remove after the index
+    res.status(200);//res.status(404) ..its not there its deleted
+    res.send(provider);
+}
+//DELETE ALL
+//uri(uniform resource identifier): /api/providers
+module.exports.deleteAll= function(req,res){
+    if(isEmptyList(providers)){
+        res.status(404);
+        res.send('List is empty cannot delete');
+      }
+    providers=[];
+    res.status(200);
+    res.send("All providers deleted");
+}
+
+
+UPDATE 
+module.exports.update = function (req, res) {
+  try {
+    if (isEmptyList(providers)) {
+      res.status(404);
+      res.send("List is empty so cannot update");
+    }
+    let id = req.params.id; // this is cmg from routers.get ('/details/:id) and param is for get & body is for post
+   let newId = req.body.id;
+   let provider = existsProvider(id);
+    if (!provider) {
+      res.status(400);
+      res.send("no such provider");
+    }
+    if (id != newId && existsProvider(newId)) {
+      res.status(400);
+      res.send("Duplicate not allowed");
+    }
+   let idx = providers.indexOf(provider);
+    provider = req.body;
+    providers[idx] = provider;
+    res.status(200);
+    res.send(provider);
+  } catch (error) {
+    //the above variable provider we are passing
+    handleError(res, error);
+  }
+};
+DELETE ONE
+module.exports.deleteOne = function (req, res) {
+  if (isEmptyList(providers)) {
+    res.status(404);
+    res.send("List is empty cannot delete");
+  }
+  let id = req.params.id;
+
+  let provider = existsProvider(id);
+  //to find index of that particular array in the model/providers.js array
+  if(!provider){
+    res.status(400);
+    res.send('No such provider to delete')
+  }
+  let idx = providers.indexOf(provider);
+
+  //remove the element at the index of "idx"
+  providers.splice(idx, 1);
+  // 2nd paramater of splice tells how many elements to remove after the index
+  res.status(200); //res.status(404) ..its not there its deleted
+  res.send(provider);
+};
